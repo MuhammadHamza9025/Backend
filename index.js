@@ -30,7 +30,7 @@ const uploads = multer({ storage: storage });
 app.post('/upload', uploads.single('image'), (req, res) => {
     res.json({
         success: 1,
-        image_url: `http://localhost:${port}/images/${req.file.filename}`
+        image_url: `https://backend-w1zs.vercel.app/images/${req.file.filename}`
     });
 });
 ///////////////////////////////////////////////////////
