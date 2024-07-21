@@ -56,7 +56,7 @@ app.get('/addproducts', async (req, res) => {
     // const newid = await Users.countDocuments()
     // console.log(newid + 1)
     const getelement = await Users.find()
-    res.json(getelement)
+    res.json({ getelement, message: 'success' })
 
 
 })
