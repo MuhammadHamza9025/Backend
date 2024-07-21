@@ -45,7 +45,7 @@ app.post('/addproducts', uploads.single('image'), async (req, res) => {
         old_price: old_price,
         new_price: new_price,
         id: Date.now(),
-        image: `http://localhost:${port}/images/${req.file.filename}`
+        image: `https://backend-w1zs.vercel.app/images/${req.file.filename}`
     })
     res.status(200).json(database)
 })
