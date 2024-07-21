@@ -30,7 +30,7 @@ const uploads = multer({ storage: storage });
 app.post('/upload', uploads.single('image'), (req, res) => {
     res.json({
         success: 1,
-        image_url: `http://localhost:${port}/images/${req.file.filename}`
+        image_url: `https://backend-w1zs.vercel.app/images/${req.file.filename}`
     });
 });
 ///////////////////////////////////////////////////////
@@ -45,7 +45,7 @@ app.post('/addproducts', uploads.single('image'), async (req, res) => {
         old_price: old_price,
         new_price: new_price,
         id: Date.now(),
-        image: `http://localhost:${port}/images/${req.file.filename}`
+        image: `https://backend-w1zs.vercel.app/addproducts/images/${req.file.filename}`
     })
     res.status(200).json(database)
 })
