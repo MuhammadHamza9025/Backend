@@ -18,7 +18,7 @@ mongoose.connect('mongodb+srv://Hamza:2vFfwKwATPXWmJy8@social.0drhd5s.mongodb.ne
 
 
 app.get('/', (req, res) => {
-    res.send('ehllo')
+    res.send('ehllo fro me')
 })
 // const storage = multer.diskStorage({
 //     destination: 'uploads/images', // Assuming 'uploads' is in the root of your project
