@@ -38,16 +38,17 @@ app.post('/upload', uploads.single('image'), (req, res) => {
 
 app.post('/addproducts', uploads.single('image'), async (req, res) => {
     const { name, category, old_price, new_price, image, id } = req.body;
+    res.send(req.body)
 
-    const database = Users.create({
-        name: name,
-        category: category,
-        old_price: old_price,
-        new_price: new_price,
-        id: Date.now(),
-        image: `https://backend-w1zs.vercel.app/images/${req.file.filename}`
-    })
-    res.status(200).json(database)
+    // const database = Users.create({
+    //     name: name,
+    //     category: category,
+    //     old_price: old_price,
+    //     new_price: new_price,
+    //     id: Date.now(),
+    //     image: `https://backend-w1zs.vercel.app/images/${req.file.filename}`
+    // })
+    // res.status(200).json(database)
 })
 
 ///////////////////////////////////////////////////////
