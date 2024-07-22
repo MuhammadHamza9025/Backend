@@ -18,7 +18,7 @@ mongoose.connect('mongodb+srv://Hamza:2vFfwKwATPXWmJy8@social.0drhd5s.mongodb.ne
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/images'); // Save files to /tmp directory on Vercel
+        cb(null, '/tmp'); // Save files to /tmp directory on Vercel
     },
     filename: (req, file, cb) => {
         cb(null, `${file.originalname}_${Date.now()}${path.extname(file.originalname)}`);
