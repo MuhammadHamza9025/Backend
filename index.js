@@ -1,26 +1,21 @@
 const port = 9000;
-const express = require('express');
-const mongoose = require('mongoose');
-const multer = require('multer');
-const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
-const Users = require('./Models/ProductModel');
-const loginusers = require('./Models/LoginModel');
+const express = require('express')
+const mongoose = require('mongoose')
+const multer = require('multer')
+const cors = require("cors")
+const path = require('path')
+const Users = require('./Models/ProductModel')
+const loginusers = require('./Models/LoginModel')
 const jwt = require('jsonwebtoken');
-const app = express();
+const { rmSync } = require('fs');
+const app = express()
+///////////////////////////////////////////
+app.use(express.json())
+app.use(cors())
+app.use('/images', express.static('uploads/images'))
 
-// Middleware
-app.use(express.json());
-app.use(cors());
-app.use('/images', express.static('images')); // Static directory for serving images
+mongoose.connect('mongodb+srv://Hamza:2vFfwKwATPXWmJy8@social.0drhd5s.mongodb.net/Adminpanel').then(() => console.log('Database Created')).catch((err) => console.log(err))
 
-// Connect to MongoDB
-mongoose.connect('mongodb+srv://Hamza:2vFfwKwATPXWmJy8@social.0drhd5s.mongodb.net/Adminpanel')
-    .then(() => console.log('Database Connected'))
-    .catch(err => console.log(err));
-
-// Multer configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, '/tmp'); // Save files to /tmp directory on Vercel
@@ -29,46 +24,27 @@ const storage = multer.diskStorage({
         cb(null, `${file.originalname}_${Date.now()}${path.extname(file.originalname)}`);
     }
 });
+////////////////////////////////////////////////////////
+const uploads = multer({ storage: storage });
 
-const upload = multer({ storage: storage });
-
-// File upload route
-app.post('/upload', upload.single('image'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ success: 0, message: 'No file uploaded' });
-    }
-
+app.post('/upload', uploads.single('image'), (req, res) => {
     res.json({
         success: 1,
-<<<<<<< HEAD
         image_url: `https://backend-w1zs.vercel.app/images/${req.file.filename}`
-=======
-        image_url: `https://backend-w1zs.vercel.app/images/${req.file.filename}` // Update this URL if using cloud storage
->>>>>>> 68381528d8a388ef81f11688cc133e37155d412f
     });
 });
+///////////////////////////////////////////////////////
 
-// Serve files from /tmp (for local testing only)
-app.get('/images/:filename', (req, res) => {
-    const filePath = path.join('/tmp', req.params.filename);
-    if (fs.existsSync(filePath)) {
-        res.sendFile(filePath);
-    } else {
-        res.status(404).json({ success: 0, message: 'File not found' });
-    }
-});
 
-// Add product route
-app.post('/addproducts', upload.single('image'), async (req, res) => {
-    const { name, category, old_price, new_price } = req.body;
+app.post('/addproducts', uploads.single('image'), async (req, res) => {
+    const { name, category, old_price, new_price, image, id } = req.body;
 
-    const product = new Users({
+    const database = Users.create({
         name: name,
         category: category,
         old_price: old_price,
         new_price: new_price,
         id: Date.now(),
-<<<<<<< HEAD
         image: `https://backend-w1zs.vercel.app/addproducts/images/${req.file.filename}`
     })
     res.status(200).json(database)
@@ -114,176 +90,145 @@ app.post('/signup', async (req, res) => {
     const duplicateEmail = await loginusers.findOne({ email: email })
     if (duplicateEmail) {
         res.json({ message: "Email Alreay in Use !" })
-=======
-        image: `https://backend-w1zs.vercel.app/images/${req.file.filename}` // Ensure this URL is valid
-    });
->>>>>>> 68381528d8a388ef81f11688cc133e37155d412f
 
-    try {
-        await product.save();
-        res.status(200).json(product);
-    } catch (error) {
-        res.status(500).json({ success: 0, message: 'Error adding product' });
     }
-});
+    else if (!duplicateEmail) {
 
-// Get products route
-app.get('/addproducts', async (req, res) => {
-    try {
-        const products = await Users.find();
-        res.json(products);
-    } catch (error) {
-        res.status(500).json({ success: 0, message: 'Error fetching products' });
-    }
-});
 
-// Delete product route
-app.delete('/addproducts/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const deletedProduct = await Users.findByIdAndDelete(id);
-        res.status(203).json(deletedProduct);
-    } catch (error) {
-        res.status(500).json({ success: 0, message: 'Error deleting product' });
-    }
-});
+        if (Username && email && password) { //Check all the info is given or not
 
-// New collection route
-app.get('/newcollection', async (req, res) => {
-    try {
-        const products = await Users.find();
-        res.json(products.slice(-8)); // Returns the last 8 products
-    } catch (error) {
-        res.status(500).json({ success: 0, message: 'Error fetching new collection' });
-    }
-});
 
-// Signup route
-app.post('/signup', async (req, res) => {
-    const { Username, email, password } = req.body;
-
-    try {
-        const duplicateEmail = await loginusers.findOne({ email: email });
-        if (duplicateEmail) {
-            return res.json({ message: 'Email Already in Use!' });
-        }
-
-        if (Username && email && password) {
-            const newUser = new loginusers({
+            const newusers = new loginusers({
                 Username: Username,
                 email: email,
                 password: password,
                 cart: [],
                 id: Date.now()
-            });
-            await newUser.save();
+            })
+            // res.status(210).json(newusers)
+            await newusers.save()
 
-            const token = jwt.sign({ id: newUser.id }, 'secret_ecom');
-            res.json({ success: true, token, message: 'Successfully Signed in!' });
-        } else {
-            res.json({ success: false, message: 'Please Provide All Details!' });
-        }
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error during signup' });
-    }
-});
-
-// Login route
-app.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-
-    try {
-        const user = await loginusers.findOne({ email: email });
-        if (user) {
-            const isPasswordValid = user.password === password;
-            if (isPasswordValid) {
-                const token = jwt.sign({ id: user.id }, 'secret_ecom');
-                res.json({ success: true, token });
-            } else {
-                res.json({ success: false, errors: 'Wrong Password' });
+            const data = {
+                newusers: {
+                    id: newusers.id
+                }
             }
-        } else {
-            res.json({ success: false, errors: 'Email Not Found' });
+
+            const token = jwt.sign(data, 'secret_ecom');
+            res.json({ success: true, token, message: 'Successfully Signed in !' })
+
         }
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error during login' });
+        else { res.json({ success: false, message: 'Please Provide All Details !' }) }
     }
-});
 
-// Get users route
+
+})
+
+///////////////////////////////////////////
+
+app.get('/login', async (req, res) => {
+    const getusers = await loginusers.find()
+
+})
+///////////////////////////////////////////
+let loginusersdata;
+app.post('/login', async (req, res) => {
+
+    const { email, password } = req.body
+
+    loginusersdata = await loginusers.findOne({ email: email })
+
+    if (loginusersdata) {
+        const comppassword = loginusersdata.password === req.body.password;
+        if (comppassword) {
+            const data = {
+                loginusersdata: {
+                    id: loginusersdata.id
+                }
+            }
+            const token = jwt.sign(data, 'secret_ecom')
+            res.json({ success: true, token })
+        }
+        else {
+            res.json({ success: false, errors: "wrong Password" });
+        }
+    }
+    else {
+        res.json({ success: false, errors: "Email Not Found" })
+    }
+
+    // console.log(loginusersdata)
+})
+
+
+////////////////////////////////////////////////
+
 app.get('/users', async (req, res) => {
-    try {
-        const users = await loginusers.find();
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching users' });
-    }
-});
+    const getusers = await loginusers.find()
+    res.json(getusers)
+})
 
-// Delete user route
 app.delete('/users/:id', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const deletedUser = await loginusers.findByIdAndDelete(id);
-        res.json(deletedUser);
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error deleting user' });
-    }
-});
+    const { id } = req.params
+    console.log(id)
+    const newusers = await loginusers.findByIdAndDelete({ _id: id })
+    res.json(newusers)
 
-// Middleware for authentication
-const fetchUsers = async (req, res, next) => {
+
+})
+
+/////////////////////////////////////////////////////////
+const fetchusers = async (req, res, next) => {
     const token = req.header('auth-token');
+    // console.log(token)
     if (!token) {
-        return res.status(401).send({ success: false, errors: 'Please authenticate using a valid token.' });
+        res.status(401).send({ success: false, errors: 'Please aunthatucate using valid token.' })
+    }
+    else {
+        try {
+            const data = jwt.verify(token, 'secret_ecom')
+            req.loginusersdata = data.loginusersdata;
+            // console.log('the data is', data.loginusersdata)
+
+            next();
+        }
+        catch (err) {
+
+            res.status(401).send({ errors: err })
+            console.log(err)
+        }
     }
 
-    try {
-        const data = jwt.verify(token, 'secret_ecom');
-        req.loginusersdata = data;
-        next();
-    } catch (err) {
-        res.status(401).send({ errors: err.message });
-    }
-};
+}
+////////////////////////////////////////
 
-// Cart routes
-app.post('/cart', fetchUsers, async (req, res) => {
-    try {
-        await loginusers.updateOne(
-            { id: req.loginusersdata.id },
-            { $push: { cart: req.body } },
-            { new: true }
-        );
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error updating cart' });
-    }
-});
+app.post('/cart', fetchusers, async (req, res) => {
 
-app.post('/getcart', fetchUsers, async (req, res) => {
-    try {
-        const user = await loginusers.findOne({ id: req.loginusersdata.id });
-        res.json(user);
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching cart' });
-    }
-});
+    let update = await loginusers.updateOne({ id: req.loginusersdata.id }, { $push: { cart: req.body } }, { new: true }).then(() => console.log('Updtaed')).catch((err) => console.log(err))
 
-app.delete('/getcart/:id', fetchUsers, async (req, res) => {
-    try {
-        const updatedUser = await loginusers.findOneAndUpdate(
-            { id: req.loginusersdata.id },
-            { $pull: { cart: { _id: req.params.id } } },
-            { new: true }
-        );
-        res.json(updatedUser.cart);
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error removing item from cart' });
-    }
-});
 
-// Start server
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+})
+
+app.post('/getcart', fetchusers, async (req, res) => {
+    let userData = await loginusers.findOne({ id: req.loginusersdata.id })
+    res.json(userData)
+    // console.log('The get item si ', req.loginusersdata.id)
+})
+
+
+app.delete('/getcart/:id', fetchusers, async (req, res) => {
+
+    console.log(req.params.id)
+    const nnn = await loginusers.findOneAndUpdate({ id: req.loginusersdata.id, }, { $pull: { cart: { _id: req.params.id } } }, { new: true })
+    res.json(nnn.cart)
+
+
+
+})
+
+
+
+
+
+
+app.listen(port)
