@@ -85,6 +85,7 @@ app.use((err, req, res, next) => {
 app.post('/addproducts', upload.single('image'), async (req, res) => {
     try {
         const { name, category, old_price, new_price } = req.body;
+        console.log(req.body)
         const imageUrl = req.file ? req.file.path : null; // Ensure imageUrl is set if file is uploaded
 
         console.log('Request body:', req.body);
