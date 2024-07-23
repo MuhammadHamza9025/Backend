@@ -7,7 +7,8 @@ const path = require('path')
 const Users = require('./Models/ProductModel')
 const loginusers = require('./Models/LoginModel')
 const jwt = require('jsonwebtoken');
-const { rmSync } = require('fs');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const app = express()
 ///////////////////////////////////////////
 app.use(express.json())
@@ -16,40 +17,95 @@ app.use('/images', express.static('uploads/images'))
 
 mongoose.connect('mongodb+srv://Hamza:2vFfwKwATPXWmJy8@social.0drhd5s.mongodb.net/Adminpanel').then(() => console.log('Database Created')).catch((err) => console.log(err))
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/images'); // Save files to /tmp directory on Vercel
+
+cloudinary.config({
+    cloud_name: 'dkgluzmpz',           // Replace with your actual Cloudinary cloud name
+    api_key: '653213975551939',       // Replace with your actual Cloudinary API key
+    api_secret: 'mNskUhfwCMa_gAeuzuL4qT29DxY' // Replace with your actual Cloudinary API secret
+});
+
+// Configure Cloudinary Storage for Multer
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (req, file) => {
+        if (!file.mimetype.startsWith('image/')) {
+            throw new Error('File is not an image');
+        }
+        return {
+            folder: 'all_images',
+            public_id: file.originalname.split('.')[0],
+            format: file.originalname.split('.').pop()
+        };
     },
-    filename: (req, file, cb) => {
-        cb(null, `${file.originalname}_${Date.now()}${path.extname(file.originalname)}`);
+});
+
+const upload = multer({ storage: storage });
+
+app.post('/upload', upload.single('image'), (req, res) => {
+    try {
+        console.log('Uploaded file:', req.file); // Debugging log
+
+        if (req.file && req.file.path) {
+            const imageUrl = req.file.path;
+            res.json({ success: 1, imageUrl: imageUrl });
+        } else {
+            res.status(400).json({ success: 0, message: 'Image upload failed' });
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ success: 0, message: error.message }); // Ensure error message is sent as JSON
     }
 });
-////////////////////////////////////////////////////////
-const uploads = multer({ storage: storage });
 
-app.post('/upload', uploads.single('image'), (req, res) => {
-    res.json({
-        success: 1,
-        image_url: `https://backend-w1zs.vercel.app/images/${req.file.filename}`
-    });
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Unexpected error:', err);
+    res.status(500).json({ success: 0, message: 'Internal Server Error' }); // Ensure error message is sent as JSON
 });
+// const storage = multer.diskStorage({
+//     destination: (req, file, cb) => {
+//         cb(null, 'uploads/images'); // Save files to /tmp directory on Vercel
+//     },
+//     filename: (req, file, cb) => {
+//         cb(null, `${file.originalname}_${Date.now()}${path.extname(file.originalname)}`);
+//     }
+// });
+// ////////////////////////////y////////////////////////////
+// const uploads = multer({ storage: storage });
+
+// app.post('/upload', uploads.single('image'), (req, res) => {
+//     res.json({
+//         success: 1,
+//         image_url: `https://backend-w1zs.vercel.app/images/${req.file.filename}`
+//     });
+// });
 ///////////////////////////////////////////////////////
 
 
-app.post('/addproducts', uploads.single('image'), async (req, res) => {
-    const { name, category, old_price, new_price, image, id } = req.body;
+app.post('/addproducts', upload.single('image'), async (req, res) => {
+    try {
+        const { name, category, old_price, new_price } = req.body;
+        const imageUrl = req.file ? req.file.path : null; // Ensure imageUrl is set if file is uploaded
 
-    console.log(req.body)
-    const database = Users.create({
-        name: name,
-        category: category,
-        old_price: old_price,
-        new_price: new_price,
-        id: Date.now(),
-        image: `https://backend-puce-zeta.vercel.app/images/${req.file.filename}`
-    })
-    res.status(200).json(database)
-})
+        console.log('Request body:', req.body);
+        console.log('Uploaded file:', req.file);
+
+        // Create a new product entry in the database
+        const product = await Users.create({
+            name: name,
+            category: category,
+            old_price: old_price,
+            new_price: new_price,
+            id: Date.now(), // Use a unique ID if necessary
+            image: imageUrl
+        });
+
+        res.status(200).json({ success: 1, product });
+    } catch (error) {
+        console.error('Error adding product:', error);
+        res.status(500).json({ success: 0, message: error.message });
+    }
+});
 
 ///////////////////////////////////////////////////////
 
